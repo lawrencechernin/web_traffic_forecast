@@ -17,23 +17,12 @@ import random
 
 
 TRAIN_SIZE=60
-print('Building model...')
-model = Sequential()
-model.add(Dense(500, input_shape = (TRAIN_SIZE, )))
-model.add(Activation('relu'))
-model.add(Dropout(0.25))
-model.add(Dense(250))
-model.add(Activation('relu'))
-model.add(Dense(1))
-model.add(Activation('linear'))
-model.compile(optimizer='adam', 
-              loss='mse')
-
 #Generate some test data, here a sine wave of two cycles. Prediction at end is zero.
 Fs = 100
 items_per_set = TRAIN_SIZE
-scale=10.0
-training_sets = TRAIN_SIZE
+scale=4.0
+training_sets = TRAIN_SIZE*2
+training_sets = 10
 num_cycles=7
 
 X_train = []
@@ -43,16 +32,31 @@ for i in range(training_sets):
     y = np.sin(2 * np.pi *  x / TRAIN_SIZE * num_cycles )
     yr = [y + random.random()/scale for y in y]
     X_train.append(yr)
-    result=0
+    result=random.random()/scale/2.0
     Y_train.append(result)
+    plt.title("Training shape")
+    plt.plot(x,yr, c=np.random.rand(3,))
+plt.show()
 
+
+print('Building model...')
+model = Sequential()
+model.add(Dense(500, input_shape = (TRAIN_SIZE, )))
+model.add(Activation('relu'))
+model.add(Dropout(0.25))
+model.add(Dense(250))
+model.add(Activation('relu'))
+model.add(Dense(1))
+model.add(Activation('linear'))
+model.compile(optimizer='adam', loss='mse')
 
 Y_test = Y_train
 X_test = X_train
 
+epochs=10
 model.fit(X_train, 
           Y_train, 
-          nb_epoch=20, 
+          nb_epoch=epochs, 
           batch_size = 128, 
           verbose=1, 
           validation_split=0.1)
@@ -68,5 +72,5 @@ mse = mean_squared_error(predicted, Y_train)
 print("MSE:", mse)
 fig = plt.figure()
 plt.title("Actual vs Predicted")
-plt.plot(X_test,predicted, color='red')
+plt.scatter(Y_train,predicted, color='red')
 plt.show()
