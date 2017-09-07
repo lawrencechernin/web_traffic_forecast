@@ -8,6 +8,8 @@ from keras.layers import Dense
 from keras.layers import LSTM
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
+from keras.layers.core import Dense, Dropout, Activation, Flatten
+
 # convert an array of values into a dataset matrix
 def create_dataset(dataset, look_back=1):
 	dataX, dataY = [], []
@@ -19,7 +21,7 @@ def create_dataset(dataset, look_back=1):
 # fix random seed for reproducibility
 numpy.random.seed(7)
 
-def plotter(scaler,look_back,dataset,trainPredict,testPredict,Page):
+def plotter(scaler,look_back,dataset,trainPredict,testPredict,Page,smape):
     trainPredictPlot = numpy.empty_like(dataset)
     trainPredictPlot[:, :] = numpy.nan
     trainPredictPlot[look_back:len(trainPredict)+look_back, :] = trainPredict
@@ -28,7 +30,7 @@ def plotter(scaler,look_back,dataset,trainPredict,testPredict,Page):
     testPredictPlot[:, :] = numpy.nan
     testPredictPlot[len(trainPredict)+(look_back*2)+1:len(dataset)-1, :] = testPredict
     # plot baseline and predictions
-    plt.title(Page)
+    plt.title(str(Page) + ", smape: " + str( 0.1* int(smape*10)) )
     plt.plot(scaler.inverse_transform(dataset),c="black")
     plt.plot(trainPredictPlot)
     plt.plot(testPredictPlot)
@@ -96,7 +98,7 @@ def run_LTSM(dataset,Page):
     #print('Test Score: %.2f RMSE' % (testScore))
     smape = smape_fast(testY[0],testPredict[:,0])
     print("SMAPE on test: [",Page,"]", smape)
-    plotter(scaler,look_back,dataset,trainPredict,testPredict,Page)
+    plotter(scaler,look_back,dataset,trainPredict,testPredict,Page,smape)
 
 ######################## MAIN PROGRAM ##########################
 
@@ -104,10 +106,17 @@ train = pd.read_csv("../input/train_1_1000.csv")
 train = train.fillna(0.)
 pages=train['Page'].values
 pages=['必娶女人_zh.wikipedia.org_all-access_spider']
+max_days_back=1000 #SMAPE=97
+max_days_back=100 #SMAPE=73
+#max_days_back=60 #SMAPE=
 for Page in pages:
     train_1 = train[train['Page']==Page]
+    train_1 = train_1[train_1.columns[-max_days_back:]]
+ 
+    print("T1",train_1.shape)
+    print("T1",train_1)
     
-    del train_1["Page"]
+    #del train_1["Page"]
     x=train_1.columns
     x=list(x)
     y=list(train_1.values[0])
