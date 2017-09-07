@@ -2,7 +2,7 @@ import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
 
-train = pd.read_csv("../input/train_1.csv")
+train = pd.read_csv("../input/train_2.csv")
 train = train.fillna(0.)
 
 
@@ -37,7 +37,7 @@ Visits[np.where(Visits < 1)] = 0.
 train['Visits'] = Visits
 
 
-test1 = pd.read_csv("../input/key_1.csv")
+test1 = pd.read_csv("../input/key_2.csv")
 test1['Page'] = test1.Page.apply(lambda x: x[:-11])
 
 test1 = test1.merge(train[['Page','Visits']], on='Page', how='left')
@@ -72,7 +72,7 @@ import gc; gc.enable()
 from sklearn.feature_extraction import text
 from sklearn import naive_bayes
 
-train = pd.read_csv("../input/train_1.csv")
+train = pd.read_csv("../input/train_2.csv")
 #determine idiom with URL
 train['origine']=train['Page'].apply(lambda x:re.split(".wikipedia.org", x)[0][-2:])
 '''
@@ -170,7 +170,7 @@ train.loc[(train.origine=='zh')&(train.date.isin(train_zh)), 'ferie']=1
 train.loc[(train.origine=='zh')&(train.date.isin(train_o_zh)), 'ferie']=0
 
 #same with test
-test = pd.read_csv("../input/key_1.csv")
+test = pd.read_csv("../input/key_2.csv")
 test['date'] = test.Page.apply(lambda a: a[-10:])
 test['Page'] = test.Page.apply(lambda a: a[:-11])
 test['date'] = test['date'].astype('datetime64[ns]')
