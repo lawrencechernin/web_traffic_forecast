@@ -65,71 +65,106 @@ def explore():
 #explore()
 
 
-### ok, now for real
+
+
+
+def run_nn(train_1,Page,days_to_predict):
+    class_0='2016-11-02' # just model the first one
+    #print("TTTT", train_1)
+    labels=train_1[train_1.columns]
+    #labels=train_1[train_1.columns[-days_to_predict:]]
+    labels = labels[class_0]
+    #print("LABELS:", labels)
+    #train_1=train_1[train_1.columns[:-days_to_predict]]
+    #print("labels:",labels.shape)
+    #print("train:", train_1.shape)
+    #print("type:", type(train_1))
+    #print("train_1:", train_1)
+    #del train_1["Page"]
+    visits_train = train_1.values
+    dates_train = train_1.columns
+    dates_train = [ datetime.strptime(x, '%Y-%m-%d')  for x in dates_train]
+    visits_labels = labels.values
+    print("visits_labels:", visits_labels)
+    #lets just predict the first label
+    print("visits_train:", visits_train)
+    
+    X_train = visits_train
+    Y_train = visits_labels
+    print("X_train.shape:", X_train.shape)
+    Pages=X_train.shape[0]
+    Dates=X_train.shape[1]
+    
+    print('Building model...')
+    model = Sequential()
+    model.add(Dense(500, input_shape = (Dates,)))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.25))
+    model.add(Dense(250))
+    model.add(Activation('relu'))
+    model.add(Dense(1))
+    model.add(Activation('linear'))
+    model.compile(optimizer='adam', loss='mape')
+    
+    Y_test = Y_train
+    X_test = X_train
+    
+    epochs=10
+    model.fit(X_train,
+              Y_train,
+              nb_epoch=epochs,
+              batch_size = 128,
+              verbose=1)
+    # validation_split=0.1)
+    score = model.evaluate(X_test, Y_test, batch_size=128)
+    print("SCORE:", score)
+    
+    predicted = model.predict(X_test)
+    #print("predicted:", predicted)
+    
+    mse = mean_squared_error(predicted, Y_train)
+    print("MSE:", mse)
+    smape = smape_fast(predicted, Y_train)
+    print("predicted:", predicted)
+    print("X_test:", X_test)
+    print("Y_train:", Y_train)
+    print("SMAPE:", smape)
+    #fig = plt.figure()
+    #plt.title("Actual vs Predicted",Page, "SMAPE:", str(0.1* int(float(smape)*10.0) ) )
+    #plt.title("Actual vs Predicted",Page)
+    #plt.scatter(Y_train,predicted, color='red')
+    #plt.show()
+
+
+def smape_fast(y_true, y_pred):
+       y_true=pd.DataFrame(y_true)
+       y_pred=pd.DataFrame(y_pred)
+       assert y_true.shape[1]==1
+       assert y_pred.shape[1]==1
+       df=pd.concat([y_true, y_pred], axis=1)
+       df.columns=['true', 'pred']
+       df['sum']=df['true']+df['pred']
+       df['diff']=df['true']-df['pred']
+       df['diff']=pd.DataFrame.abs(df['diff'])
+       df['smape_base']=df['diff']/df['sum']
+       out=df['smape_base'].sum()
+       out*= (200/y_true.shape[0])
+       return out
+
 
 train = pd.read_csv("../input/train_1_1000.csv")
 train = train.fillna(0.)
-train_1 = train
-class_0='2016-11-02' # just model the first one
-labels=train_1[train_1.columns[-days_to_predict:]]
-labels = labels[class_0]
-train_1=train_1[train_1.columns[:-days_to_predict]]
-print("labels:",labels.shape)
-print("train:", train_1.shape)
-print("type:", type(train_1))
-print("train_1:", train_1)
-del train_1["Page"]
-visits_train = train_1.values
-dates_train = train_1.columns
-dates_train = [ datetime.strptime(x, '%Y-%m-%d')  for x in dates_train]
-visits_labels = labels.values
-#lets just predict the first label
-print("visits_train:", visits_train)
-
-X_train = visits_train
-Y_train = labels
-print("X_train.shape:", X_train.shape)
-Pages=X_train.shape[0]
-Dates=X_train.shape[1]
-
-print('Building model...')
-model = Sequential()
-model.add(Dense(500, input_shape = (Dates,)))
-model.add(Activation('relu'))
-model.add(Dropout(0.25))
-model.add(Dense(250))
-model.add(Activation('relu'))
-model.add(Dense(1))
-model.add(Activation('linear'))
-model.compile(optimizer='adam', loss='mape')
-
-Y_test = Y_train
-X_test = X_train
-
-epochs=10
-model.fit(X_train,
-          Y_train,
-          nb_epoch=epochs,
-          batch_size = 128,
-          verbose=1,
-          validation_split=0.1)
-score = model.evaluate(X_test, Y_test, batch_size=128)
-print("SCORE:", score)
-
-
-
-predicted = model.predict(X_test)
-#print("predicted:", predicted)
-
-mse = mean_squared_error(predicted, Y_train)
-print("MSE:", mse)
-fig = plt.figure()
-plt.title("Actual vs Predicted")
-plt.scatter(Y_train,predicted, color='red')
-plt.show()
-
-
-
+pages=train['Page'].values
+pages=['必娶女人_zh.wikipedia.org_all-access_spider']
+#max_days_back=200 #SMAPE=112
+#max_days_back=100 #SMAPE= 97.6
+#max_days_back=80 #SMAPE= 63.9
+max_days_back=70 #SMAPE= 2.4
+for Page in pages:
+    train_1 = train[train['Page']==Page]
+    #print("T1", train_1)
+    train_1 = train_1[train_1.columns[-max_days_back:]]
+    run_nn(train_1,Page,days_to_predict)
 
 
 
