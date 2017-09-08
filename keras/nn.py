@@ -109,7 +109,7 @@ def run_nn(train_1,Page,days_to_predict):
     Y_test = Y_train
     X_test = X_train
     
-    epochs=10
+    epochs=100
     model.fit(X_train,
               Y_train,
               nb_epoch=epochs,
@@ -120,6 +120,8 @@ def run_nn(train_1,Page,days_to_predict):
     print("SCORE:", score)
     
     predicted = model.predict(X_test)
+    if predicted[0] < 0:
+       predicted[0] = 0
     #print("predicted:", predicted)
     
     mse = mean_squared_error(predicted, Y_train)
@@ -128,15 +130,17 @@ def run_nn(train_1,Page,days_to_predict):
     print("predicted:", predicted)
     print("X_test:", X_test)
     print("Y_train:", Y_train)
-    print("SMAPE:", smape)
+    print("[",Page, "], SMAPE:", smape)
     #fig = plt.figure()
     #plt.title("Actual vs Predicted",Page, "SMAPE:", str(0.1* int(float(smape)*10.0) ) )
     #plt.title("Actual vs Predicted",Page)
     #plt.scatter(Y_train,predicted, color='red')
     #plt.show()
+    return int(predicted[0][0])
 
 
 def smape_fast(y_true, y_pred):
+       epsilon = 0.01  # almost no visit ;-)
        y_true=pd.DataFrame(y_true)
        y_pred=pd.DataFrame(y_pred)
        assert y_true.shape[1]==1
@@ -146,25 +150,40 @@ def smape_fast(y_true, y_pred):
        df['sum']=df['true']+df['pred']
        df['diff']=df['true']-df['pred']
        df['diff']=pd.DataFrame.abs(df['diff'])
+       if df['sum'].sum() == 0:
+           df['sum'] = epsilon  # avoid nan
+
        df['smape_base']=df['diff']/df['sum']
        out=df['smape_base'].sum()
        out*= (200/y_true.shape[0])
        return out
 
 
-train = pd.read_csv("../input/train_1_1000.csv")
+train = pd.read_csv("../input/train_1.csv")
 train = train.fillna(0.)
 pages=train['Page'].values
-pages=['必娶女人_zh.wikipedia.org_all-access_spider']
-#max_days_back=200 #SMAPE=112
-#max_days_back=100 #SMAPE= 97.6
-#max_days_back=80 #SMAPE= 63.9
-max_days_back=70 #SMAPE= 2.4
+        # test case of bad spiky
+	#pages=['必娶女人_zh.wikipedia.org_all-access_spider']
+	#max_days_back=200 #SMAPE=112
+	#max_days_back=100 #SMAPE= 97.6
+	#max_days_back=80 #SMAPE= 63.9
+	#max_days_back=70 #SMAPE= 2.4
+max_days_back=100
+results = {}
+
+columns = ['Page','Visits']
+df = pd.DataFrame(columns=columns)
+
+
 for Page in pages:
     train_1 = train[train['Page']==Page]
-    #print("T1", train_1)
     train_1 = train_1[train_1.columns[-max_days_back:]]
-    run_nn(train_1,Page,days_to_predict)
+    predicted_visits = run_nn(train_1,Page,days_to_predict)
+    df.loc[len(df)] = [Page,predicted_visits]
+   
 
 
-
+test1 = pd.read_csv("../input/key_1.csv")
+test1['Page'] = test1.Page.apply(lambda x: x[:-11])
+test1 = test1.merge(df[['Page','Visits']], on='Page', how='left')
+test1[['Id','Visits']].to_csv('sub_nn.csv', index=False)
