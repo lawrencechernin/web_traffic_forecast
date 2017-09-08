@@ -1,11 +1,10 @@
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-import matplotlib.pylab as plt
 from datetime import datetime
 import numpy as np
 from sklearn import preprocessing
 from sklearn.metrics import mean_squared_error, classification_report
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 import datetime as dt
 import time
 
@@ -14,7 +13,6 @@ from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.recurrent import LSTM, GRU
 from keras.layers import Convolution1D, MaxPooling1D
 from keras.callbacks import Callback
-import utils
 import random
 
 
@@ -69,7 +67,7 @@ def explore():
 
 
 def run_nn(train_1,Page,days_to_predict):
-    class_0='2016-11-02' # just model the first one
+    class_0='2017-08-31' # just model the first one
     #print("TTTT", train_1)
     labels=train_1[train_1.columns]
     #labels=train_1[train_1.columns[-days_to_predict:]]
@@ -82,16 +80,16 @@ def run_nn(train_1,Page,days_to_predict):
     #print("train_1:", train_1)
     #del train_1["Page"]
     visits_train = train_1.values
-    dates_train = train_1.columns
-    dates_train = [ datetime.strptime(x, '%Y-%m-%d')  for x in dates_train]
+    #dates_train = train_1.columns
+    #dates_train = [ datetime.strptime(x, '%Y-%m-%d')  for x in dates_train]
     visits_labels = labels.values
-    print("visits_labels:", visits_labels)
+    #print("visits_labels:", visits_labels)
     #lets just predict the first label
-    print("visits_train:", visits_train)
+    #print("visits_train:", visits_train)
     
     X_train = visits_train
     Y_train = visits_labels
-    print("X_train.shape:", X_train.shape)
+    #print("X_train.shape:", X_train.shape)
     Pages=X_train.shape[0]
     Dates=X_train.shape[1]
     
@@ -104,7 +102,7 @@ def run_nn(train_1,Page,days_to_predict):
     model.add(Activation('relu'))
     model.add(Dense(1))
     model.add(Activation('linear'))
-    model.compile(optimizer='adam', loss='mape')
+    model.compile(optimizer='adam', loss='mse')
     
     Y_test = Y_train
     X_test = X_train
@@ -113,23 +111,23 @@ def run_nn(train_1,Page,days_to_predict):
     model.fit(X_train,
               Y_train,
               nb_epoch=epochs,
-              batch_size = 128,
+              batch_size = 512,
               verbose=1)
     # validation_split=0.1)
-    score = model.evaluate(X_test, Y_test, batch_size=128)
-    print("SCORE:", score)
+    #score = model.evaluate(X_test, Y_test, batch_size=128)
+    #print("SCORE:", score)
     
     predicted = model.predict(X_test)
     if predicted[0] < 0:
        predicted[0] = 0
     #print("predicted:", predicted)
     
-    mse = mean_squared_error(predicted, Y_train)
-    print("MSE:", mse)
+    #mse = mean_squared_error(predicted, Y_train)
+    #print("MSE:", mse)
     smape = smape_fast(predicted, Y_train)
-    print("predicted:", predicted)
-    print("X_test:", X_test)
-    print("Y_train:", Y_train)
+    #print("predicted:", predicted)
+    #print("X_test:", X_test)
+    #print("Y_train:", Y_train)
     print("[",Page, "], SMAPE:", smape)
     #fig = plt.figure()
     #plt.title("Actual vs Predicted",Page, "SMAPE:", str(0.1* int(float(smape)*10.0) ) )
@@ -159,7 +157,7 @@ def smape_fast(y_true, y_pred):
        return out
 
 
-train = pd.read_csv("../input/train_1.csv")
+train = pd.read_csv("../input/train_2.csv")
 train = train.fillna(0.)
 pages=train['Page'].values
         # test case of bad spiky
@@ -183,7 +181,7 @@ for Page in pages:
    
 
 
-test1 = pd.read_csv("../input/key_1.csv")
+test1 = pd.read_csv("../input/key_2.csv")
 test1['Page'] = test1.Page.apply(lambda x: x[:-11])
 test1 = test1.merge(df[['Page','Visits']], on='Page', how='left')
 test1[['Id','Visits']].to_csv('sub_nn.csv', index=False)
