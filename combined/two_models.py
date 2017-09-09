@@ -116,7 +116,12 @@ result.columns=['origine']
 del train['origine']
 
 #let's flatten the train as did clustifier and initialize a "ferie" columns instead of a weekend column
-train = pd.melt(train[list(train.columns[-49:])+['Page']], id_vars='Page', var_name='date', value_name='Visits')
+look_back=49
+look_back=50
+look_back=51
+look_back=54
+look_back=60
+train = pd.melt(train[list(train.columns[-look_back:])+['Page']], id_vars='Page', var_name='date', value_name='Visits')
 train['date'] = train['date'].astype('datetime64[ns]')
 train['ferie'] = ((train.date.dt.dayofweek) >=5).astype(float)
 train['origine']=train['Page'].apply(lambda x:re.split(".wikipedia.org", x)[0][-2:])
