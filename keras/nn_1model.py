@@ -118,8 +118,7 @@ def run_nn(train_1):
               Y_train,
               nb_epoch=epochs,
               batch_size = 512,
-              verbose=1)
-    # validation_split=0.1)
+              verbose=1, validation_split=0.1)
     #score = model.evaluate(X_test, Y_test, batch_size=128)
     #print("SCORE:", score)
     
@@ -148,18 +147,23 @@ def run_nn(train_1):
 
 train = pd.read_csv("../input/train_2.csv")
 train = train.fillna(0.)
+print("Train shape 0:", train.shape)
 pages=train['Page'].values
 print("pages:", len(pages))
-max_days_back=700
+max_days_back=790
 
 train = train[train.columns[-max_days_back:]]
 print("Train shape:", train.shape)
-predicted_visits = run_nn(train)
-print("predicted_visits:", len(predicted_visits))
+predicted_visits0 = run_nn(train)
+print("predicted_visits0:", predicted_visits0)
+predicted_visits = [i[0] for i in predicted_visits0]
+print("predicted_visits", predicted_visits)
+print("predicted_visits len", len(predicted_visits))
+
 visits_df = pd.DataFrame( {'Page': pages, 'Visits': predicted_visits} )
 visits_df.to_csv('visits_df.csv')
 
 test1 = pd.read_csv("../input/key_2.csv")
 test1['Page'] = test1.Page.apply(lambda x: x[:-11])
-test1 = test1.merge(df[['Page','Visits']], on='Page', how='left')
+test1 = test1.merge(visits_df[['Page','Visits']], on='Page', how='left')
 test1[['Id','Visits']].to_csv('sub_nn1.csv', index=False)
