@@ -16,6 +16,17 @@ from keras.callbacks import Callback
 import random
 
 
+def smapei(y_true, y_pred): # for one point
+       num = abs(y_true-y_pred)
+       denom = abs(y_true) + abs(y_pred)
+       if denom < 0.01:
+           return 0
+       else :
+           smape_i = round(num*2000.0/denom,2)
+           return ("%.2f" % smape_i)
+
+
+
 def smape_fast(y_true, y_pred):
        epsilon = 0.01  # almost no visit ;-)
        y_true=pd.DataFrame(y_true)
@@ -108,31 +119,43 @@ def run_nn(train_1):
     model.add(Activation('relu'))
     model.add(Dense(1))
     model.add(Activation('linear'))
-    model.compile(optimizer='adam', loss='mse')
+    model.compile(optimizer='adam', loss='mae')
     
     Y_test = Y_train
     X_test = X_train
     
-    epochs=100
+    epochs=200
     model.fit(X_train,
               Y_train,
               nb_epoch=epochs,
               batch_size = 512,
               verbose=1, validation_split=0.1)
-    #score = model.evaluate(X_test, Y_test, batch_size=128)
-    #print("SCORE:", score)
+    score = model.evaluate(X_test, Y_test, batch_size=512)
+    print("\nSCORE:", score, "SQRT:", np.sqrt(score))
     
     predicted = model.predict(X_test)
-    if predicted[0] < 0:
-       predicted[0] = 0
+    maxv = -1
+    maxv2 = -1
+    imax = -1
+    imax2 = -1
+    for i in range(len(predicted)):
+        if predicted[i] < 0:
+            predicted[i] = 0
+        predicted[i] = 0.1*int(10.0*predicted[i])
+        if (     predicted[i]  > maxv ):
+            maxv2 = maxv
+            imax2 = imax
+            maxv =  predicted[i]
+            imax =  i
+    avg = train_1.loc[imax].mean()
+    avg2 = train_1.loc[imax2].mean()
+    print("MAX VALUE:", maxv, "imax:", imax, ",AVG:", avg)
+    print("MAX VALUE2:", maxv2, "imax:", imax2, ",AVG:", avg2)
     #print("predicted:", predicted)
     
-    #mse = mean_squared_error(predicted, Y_train)
-    #print("MSE:", mse)
+    mse = mean_squared_error(predicted, Y_train)
+    print("MSE:", mse)
     smape = smape_fast(predicted, Y_train)
-    #print("predicted:", predicted)
-    #print("X_test:", X_test)
-    #print("Y_train:", Y_train)
     print("SMAPE:", smape)
     #fig = plt.figure()
     #plt.title("Actual vs Predicted",Page, "SMAPE:", str(0.1* int(float(smape)*10.0) ) )
@@ -140,17 +163,23 @@ def run_nn(train_1):
     #plt.scatter(Y_train,predicted, color='red')
     #plt.show()
     #TBD predicted = page+visits
-    print("predicted:", predicted)
+    side_by_side = zip(predicted,Y_train)
+    print("predicted,actual,smape")
+    for s in side_by_side:
+        smape_i = smapei(s[0][0],s[1])
+        print(s[0][0],",",s[1],",",smape_i)
     return predicted
 
 
 
 train = pd.read_csv("../input/train_2.csv")
 train = train.fillna(0.)
+train = train.head(50000)
+
 print("Train shape 0:", train.shape)
 pages=train['Page'].values
 print("pages:", len(pages))
-max_days_back=790
+max_days_back=100
 
 train = train[train.columns[-max_days_back:]]
 print("Train shape:", train.shape)
