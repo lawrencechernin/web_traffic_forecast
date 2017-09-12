@@ -12,9 +12,13 @@ full_data = full_data.fillna(0.)
 # Cross validation will be run for the following lookbacks
 # After all CVs are run a plot of 5 fold avergae SMAPE score vs look_back is generated
 
-look_backs = [15, 18, 20, 23, 25, 27, 30, 33, 35]
+look_backs = [12,15, 17,18,19, 20,21,22, 23, 25, 27, 30, 33, 35, 40, 45, 49]
+look_backs = [20, 22, 25, 27, 30]
+WINDOWS= [[11, 18, 30, 48, 78, 126, 203, 329],
+           [7, 13, 20, 33, 53, 86, 139, 225],
+           [12, 20, 33, 50, 82, 130, 215, 340]]
 SAMPLE = True # Set false to use entire data set
-SAMPLES = 8000
+SAMPLES = 10000
 #look_backs = [25]
 
 # Randomly sample rows if specified
@@ -24,17 +28,29 @@ if SAMPLE:
     print("Using", SAMPLES, "random rows")
 
 def main():
-    smape_avgs = []
-    for lb in look_backs:
-        smape_avgs.append(runCV(lb))
+    
+    smape_arr = []
+    for index in range(len(WINDOWS)):
+        smape_avgs = []
+        for lb in look_backs:
+            smape_avgs.append(runCV(lb, WINDOWS[index]))
+        smape_arr.append(smape_avgs)
 
-    plt.plot(look_backs, smape_avgs)
-    plt.scatter(look_backs, smape_avgs)
+    title = "5 Fold SMAPE vs. look_back"
+    if SAMPLE:
+        title += "\n" + str(SAMPLES) + " Samples"
+
+    for index in range(len(smape_arr)):
+        lab = "Window " + str(index)
+        plt.plot(look_backs, smape_arr[index], label=lab)
+        plt.scatter(look_backs, smape_arr[index])
     plt.xlabel("look_back")
     plt.ylabel("5 Fold SMAPE")
+    plt.legend()
+    plt.title(title)
     plt.show()
 
-def runCV(look_back):
+def runCV(look_back, windows):
     #build cross validation sets, make predictions, and calculate SMAPES
     k = 5
     gap = 61 # Cross Validation gap
@@ -58,7 +74,7 @@ def runCV(look_back):
         test_melt = pd.melt(test, id_vars='Page', var_name='date', value_name='Visits')
         print("Training from", train.columns.values[1], "to", train.columns.values[-1])
         print("Testing from", test.columns.values[1], "to", test.columns.values[-1])
-        smapes.append(makePredictions(train, test_melt, look_back))
+        smapes.append(makePredictions(train, test_melt, windows,  look_back))
 
     print("Average SMAPES:", np.mean(smapes))
     print("\n")
@@ -77,10 +93,11 @@ def smape(y_true, y_pred):
 # Then a median of these medians is taken as the estimate for the next 60 days.
 # This code's result has the score of around 44.9 on public leaderboard, but I could get upto 44.7 by playing with it.
 
-def makePredictions(train, test_melt, look_back=49):
+def makePredictions(train, test_melt, Windows, look_back=49):
     r = 1.61803398875
-    Windows = np.round(r**np.arange(1,9) * 7)
-    Windows = [11, 18, 30, 48, 78, 126, 203, 329]
+    # Windows = np.round(r**np.arange(1,9) * 7)
+    # Windows = [11, 18, 30, 48, 78, 126, 203, 329]
+    # Windows = [7, 13, 20, 33, 53, 86, 139, 225]
 
     n = train.shape[1] - 1 #  550
     Visits = np.zeros(train.shape[0])
