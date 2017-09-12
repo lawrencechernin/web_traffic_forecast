@@ -15,7 +15,7 @@ train = train.fillna(0.)
 # r = 1.61803398875
 # Windows = np.round(r**np.arange(1,9) * 7)
 Windows = [11, 18, 30, 48, 78, 126, 203, 329]
-
+Windows = [5, 12, 17, 30, 47, 77, 110, 215]
 
 n = train.shape[1] - 1 #  550
 Visits = np.zeros(train.shape[0])
@@ -120,7 +120,7 @@ look_back=49
 look_back=50
 look_back=51
 look_back=54
-look_back=60
+look_back=33
 train = pd.melt(train[list(train.columns[-look_back:])+['Page']], id_vars='Page', var_name='date', value_name='Visits')
 train['date'] = train['date'].astype('datetime64[ns]')
 train['ferie'] = ((train.date.dt.dayofweek) >=5).astype(float)
