@@ -6,14 +6,22 @@ from sklearn.feature_extraction import text
 from sklearn import naive_bayes
 import matplotlib.pyplot as plt
 
-full_data = pd.read_csv("../input/train_2.csv", nrows = 5000) # remove 'nrows' to test all data
+full_data = pd.read_csv("../input/train_2.csv") # remove 'nrows' to test all data
 full_data = full_data.fillna(0.)
 
 # Cross validation will be run for the following lookbacks
 # After all CVs are run a plot of 5 fold avergae SMAPE score vs look_back is generated
 
-look_backs = [14, 20, 23, 25, 30, 35, 42, 47, 55]
+look_backs = [15, 18, 20, 23, 25, 27, 30, 33, 35]
+SAMPLE = True # Set false to use entire data set
+SAMPLES = 8000
 #look_backs = [25]
+
+# Randomly sample rows if specified
+if SAMPLE:
+    full_data = full_data.sample(SAMPLES, axis=0).reset_index()
+    full_data.index = range(len(full_data))
+    print("Using", SAMPLES, "random rows")
 
 def main():
     smape_avgs = []
@@ -32,10 +40,12 @@ def runCV(look_back):
     gap = 61 # Cross Validation gap
     predictionDays = 61 # Number of days to predict
     smapes = []
+
+
     for i in range(k):
         # Determine last day to predict
-        end = (-1*gap * (i + 1) + predictionDays)
 
+        end = (-1*gap * (i + 1) + predictionDays)
         # Divide into training and test sets
         train = full_data.iloc[:, 0:(-1*gap * (i + 1))]
         test = full_data[['Page'] + list(full_data.columns[(-1*gap * (i + 1)):(-1*gap * (i + 1) + predictionDays)])]
@@ -89,6 +99,7 @@ def makePredictions(train, test_melt, look_back=49):
         Visits[i] = np.median(M)
 
     Visits[np.where(Visits < 1)] = 0.
+    
     train['Predicted'] = Visits
     #print(train.head())
     #test1 = pd.read_csv("../input/key_2.csv")
@@ -99,6 +110,7 @@ def makePredictions(train, test_melt, look_back=49):
 
     # add model 2
     
+
     #determine idiom with URL
     train['origine']=train['Page'].apply(lambda x:re.split(".wikipedia.org", x)[0][-2:])
 
