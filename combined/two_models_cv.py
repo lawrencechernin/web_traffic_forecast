@@ -13,12 +13,13 @@ full_data = full_data.fillna(0.)
 # After all CVs are run a plot of 5 fold avergae SMAPE score vs look_back is generated
 
 look_backs = [12,15, 17,18,19, 20,21,22, 23, 25, 27, 30, 33, 35, 40, 45, 49]
-look_backs = [20, 22, 25, 27, 30]
+look_backs = [18, 20, 22, 25, 27, 30, 33, 38, 50]
 WINDOWS= [[11, 18, 30, 48, 78, 126, 203, 329],
            [7, 13, 20, 33, 53, 86, 139, 225],
+           [5, 12, 17, 30, 47, 77, 110, 215],
            [12, 20, 33, 50, 82, 130, 215, 340]]
 SAMPLE = True # Set false to use entire data set
-SAMPLES = 10000
+SAMPLES = 8000
 #look_backs = [25]
 
 # Randomly sample rows if specified
